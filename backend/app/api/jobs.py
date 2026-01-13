@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
+from sqlalchemy import or_, func
+from typing import List, Optional
 
 from app.database import get_db
 from app.models import Job
@@ -57,6 +58,78 @@ def list_jobs(
     
     jobs = query.offset(skip).limit(limit).all()
     return jobs
+
+
+@router.get("/search")
+async def search_jobs(
+    q: Optional[str] = Query(None, description="Search query for title/company/description"),
+    skills: Optional[List[str]] = Query(None, description="Filter by required skills"),
+    location: Optional[str] = Query(None, description="Filter by location"),
+    job_type: Optional[str] = Query(None, description="Filter by job type"),
+    skip: int = 0,
+    limit: int = 20,
+    db: Session = Depends(get_db)
+):
+    """
+    Advanced job search with multiple filters.
+    Supports text search, skills matching, location, and job type.
+    """
+    query = db.query(Job)
+    
+    # Text search in title, company, description
+    if q:
+        search_filter = or_(
+            Job.title.ilike(f"%{q}%"),
+            Job.company.ilike(f"%{q}%"),
+            Job.description.ilike(f"%{q}%")
+        )
+        query = query.filter(search_filter)
+    
+    # Skills filter
+    if skills:
+        skill_filters = []
+        for skill in skills:
+            skill_filters.append(
+                func.jsonb_exists(Job.skills_required, skill)
+            )
+        query = query.filter(or_(*skill_filters))
+    
+    # Location filter
+    if location:
+        query = query.filter(Job.location.ilike(f"%{location}%"))
+    
+    # Job type filter
+    if job_type:
+        query = query.filter(Job.job_type == job_type)
+    
+    # Order by most recent
+    query = query.order_by(Job.created_at.desc())
+    
+    # Count total
+    total = query.count()
+    
+    # Apply pagination
+    jobs = query.offset(skip).limit(limit).all()
+    
+    return {
+        "jobs": [
+            {
+                "id": job.id,
+                "title": job.title,
+                "company": job.company,
+                "location": job.location,
+                "salary_range": job.salary_range,
+                "job_type": job.job_type,
+                "skills_required": job.skills_required,
+                "description": job.description[:200] + "..." if len(job.description) > 200 else job.description,
+                "created_at": job.created_at.isoformat()
+            }
+            for job in jobs
+        ],
+        "total": total,
+        "page": skip // limit + 1,
+        "pages": (total + limit - 1) // limit
+    }
 
 
 @router.get("/{job_id}", response_model=JobResponse)

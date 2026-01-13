@@ -17,3 +17,5 @@ class User(Base):
     
     # Relationships
     resumes = relationship("Resume", back_populates="user", cascade="all, delete-orphan")
+    saved_jobs = relationship("SavedJob", back_populates="user", cascade="all, delete-orphan")
+    job_applications = relationship("JobApplication", back_populates="user", cascade="all, delete-orphan")

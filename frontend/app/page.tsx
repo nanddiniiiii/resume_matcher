@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import ResumeUpload from '@/components/ResumeUpload'
 import JobMatches from '@/components/JobMatches'
+import Header from '@/components/Header'
 
 export default function Home() {
   const [resumeId, setResumeId] = useState<number | null>(null)
@@ -19,22 +20,9 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                🎯 AI Job Matcher
-              </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                Find your perfect role with AI-powered matching
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -42,10 +30,10 @@ export default function Home() {
           <>
             {/* Hero Section */}
             <div className="text-center mb-12">
-              <h2 className="text-4xl font-extrabold text-gray-900 sm:text-5xl mb-4">
+              <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl mb-4">
                 Upload Your Resume
               </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
                 Our AI will analyze your skills and experience to recommend the best matching jobs.
                 Get detailed explanations for every recommendation.
               </p>
@@ -53,24 +41,24 @@ export default function Home() {
 
             {/* Features */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-100 dark:border-gray-700 transition-colors">
                 <div className="text-3xl mb-3">🧠</div>
-                <h3 className="text-lg font-semibold mb-2">Semantic Matching</h3>
-                <p className="text-gray-600 text-sm">
+                <h3 className="text-lg font-semibold mb-2 dark:text-white">Semantic Matching</h3>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">
                   Advanced AI analyzes your resume beyond simple keywords
                 </p>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-100 dark:border-gray-700 transition-colors">
                 <div className="text-3xl mb-3">💡</div>
-                <h3 className="text-lg font-semibold mb-2">Explainable AI</h3>
-                <p className="text-gray-600 text-sm">
+                <h3 className="text-lg font-semibold mb-2 dark:text-white">Explainable AI</h3>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">
                   Understand exactly why each job matches your profile
                 </p>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-100 dark:border-gray-700 transition-colors">
                 <div className="text-3xl mb-3">📊</div>
-                <h3 className="text-lg font-semibold mb-2">Skill Gap Analysis</h3>
-                <p className="text-gray-600 text-sm">
+                <h3 className="text-lg font-semibold mb-2 dark:text-white">Skill Gap Analysis</h3>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">
                   See what skills you have and what you need to develop
                 </p>
               </div>
@@ -84,7 +72,7 @@ export default function Home() {
             {/* Back Button */}
             <button
               onClick={handleBackToUpload}
-              className="mb-6 flex items-center text-primary-600 hover:text-primary-700 font-medium"
+              className="mb-6 flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition-colors"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />

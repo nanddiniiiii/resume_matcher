@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { resumeAPI } from '@/lib/api'
+import toast from 'react-hot-toast'
 
 interface ResumeUploadProps {
   onUploadSuccess: (resumeId: number) => void
@@ -12,60 +13,107 @@ export default function ResumeUpload({ onUploadSuccess }: ResumeUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [uploadResult, setUploadResult] = useState<any>(null)
+  const [dragActive, setDragActive] = useState(false)
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true)
+    } else if (e.type === 'dragleave') {
+      setDragActive(false)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    
+    const droppedFile = e.dataTransfer.files?.[0]
+    if (droppedFile) {
+      validateAndSetFile(droppedFile)
+    }
+  }
+
+  const validateAndSetFile = (selectedFile: File) => {
+    if (selectedFile.type !== 'application/pdf') {
+      setError('Please upload a PDF file')
+      toast.error('Only PDF files are supported')
+      return
+    }
+    if (selectedFile.size > 5 * 1024 * 1024) {
+      setError('File size must be less than 5MB')
+      toast.error('File size must be less than 5MB')
+      return
+    }
+    setFile(selectedFile)
+    setError(null)
+    setUploadResult(null)
+    toast.success('File selected successfully')
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
-      if (selectedFile.type !== 'application/pdf') {
-        setError('Please upload a PDF file')
-        return
-      }
-      if (selectedFile.size > 5 * 1024 * 1024) {
-        setError('File size must be less than 5MB')
-        return
-      }
-      setFile(selectedFile)
-      setError(null)
-      setUploadResult(null)
+      validateAndSetFile(selectedFile)
     }
   }
 
   const handleUpload = async () => {
     if (!file) {
       setError('Please select a file first')
+      toast.error('Please select a file first')
       return
     }
 
     setUploading(true)
     setError(null)
 
+    const loadingToast = toast.loading('Analyzing your resume...')
+
     try {
       const result = await resumeAPI.upload(file)
       setUploadResult(result)
+      toast.success('Resume analyzed successfully!', { id: loadingToast })
       
       // Show success message briefly, then navigate to matches
       setTimeout(() => {
         onUploadSuccess(result.id)
-      }, 2000)
+      }, 1500)
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to upload resume. Please try again.')
+      const errorMsg = err.response?.data?.detail || 'Failed to upload resume. Please try again.'
+      setError(errorMsg)
+      toast.error(errorMsg, { id: loadingToast })
     } finally {
       setUploading(false)
     }
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+    <div className="max-w-2xl mx-auto animate-fadeIn">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 transition-all duration-300 hover:shadow-xl">
         {/* Upload Area */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
             Upload Your Resume (PDF)
           </label>
-          <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-primary-400 transition-colors">
+          <div 
+            className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-lg transition-all duration-300 ${
+              dragActive 
+                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' 
+                : 'border-gray-300 dark:border-gray-600 hover:border-purple-400 dark:hover:border-purple-500'
+            }`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
             <div className="space-y-1 text-center">
               <svg
-                className="mx-auto h-12 w-12 text-gray-400"
+                className={`mx-auto h-12 w-12 transition-colors ${
+                  dragActive ? 'text-purple-500' : 'text-gray-400 dark:text-gray-500'
+                }`}
                 stroke="currentColor"
                 fill="none"
                 viewBox="0 0 48 48"
@@ -77,10 +125,10 @@ export default function ResumeUpload({ onUploadSuccess }: ResumeUploadProps) {
                   strokeLinejoin="round"
                 />
               </svg>
-              <div className="flex text-sm text-gray-600">
+              <div className="flex text-sm text-gray-600 dark:text-gray-300">
                 <label
                   htmlFor="file-upload"
-                  className="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none"
+                  className="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 focus-within:outline-none transition-colors"
                 >
                   <span>Upload a file</span>
                   <input

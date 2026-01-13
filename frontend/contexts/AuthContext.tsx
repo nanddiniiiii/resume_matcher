@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import Cookies from 'js-cookie'
 import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
 interface User {
   id: number
@@ -67,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await response.json()
     Cookies.set('access_token', data.access_token, { expires: 7 })
     setUser(data.user)
+    toast.success('Welcome back!')
     router.push('/')
   }
 
@@ -88,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Auto-login after registration
       await login(email, password)
+      toast.success('Account created successfully!')
     } catch (error: any) {
       console.error('Registration error:', error)
       throw new Error(error.message || 'Failed to connect to server')
@@ -97,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     Cookies.remove('access_token')
     setUser(null)
+    toast.success('Signed out successfully')
     router.push('/login')
   }
 
