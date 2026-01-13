@@ -1,0 +1,122 @@
+[
+    {
+        "title": "Software Engineering Intern",
+        "company": "Tech Innovators Inc.",
+        "description": "We are seeking a talented Software Engineering Intern to join our dynamic team. You will work on building scalable web applications using modern frameworks. This role involves collaborating with senior engineers, writing clean code, and contributing to real production systems.",
+        "required_skills": ["python", "javascript", "react", "sql", "git"],
+        "location": "San Francisco, CA",
+        "job_type": "internship"
+    },
+    {
+        "title": "Full Stack Developer Intern",
+        "company": "StartupHub",
+        "description": "Join our fast-paced startup as a Full Stack Developer Intern. You'll work on both frontend and backend development, helping to build our main product from the ground up. Experience with React and Node.js is essential.",
+        "required_skills": ["react", "node.js", "mongodb", "javascript", "html", "css"],
+        "location": "Remote",
+        "job_type": "internship"
+    },
+    {
+        "title": "Data Science Intern",
+        "company": "Analytics Pro",
+        "description": "We're looking for a Data Science Intern to help analyze large datasets and build machine learning models. You'll work with our data team to extract insights and create predictive models using Python and popular ML libraries.",
+        "required_skills": ["python", "machine learning", "pandas", "numpy", "sql", "data analysis"],
+        "location": "New York, NY",
+        "job_type": "internship"
+    },
+    {
+        "title": "Frontend Developer",
+        "company": "WebCraft Solutions",
+        "description": "Seeking a Frontend Developer to create beautiful, responsive user interfaces. You'll work with React, TypeScript, and modern CSS frameworks to deliver exceptional user experiences. 1-2 years of experience preferred.",
+        "required_skills": ["react", "typescript", "html", "css", "tailwind", "git"],
+        "location": "Austin, TX",
+        "job_type": "full-time"
+    },
+    {
+        "title": "Backend Developer",
+        "company": "CloudTech Systems",
+        "description": "Join our backend team to build robust, scalable APIs and microservices. You'll work with Python, FastAPI, and PostgreSQL to develop high-performance systems. Experience with Docker and cloud platforms is a plus.",
+        "required_skills": ["python", "fastapi", "postgresql", "docker", "rest api", "microservices"],
+        "location": "Seattle, WA",
+        "job_type": "full-time"
+    },
+    {
+        "title": "Machine Learning Engineer Intern",
+        "company": "AI Innovations",
+        "description": "Work on cutting-edge AI projects as a Machine Learning Engineer Intern. You'll help develop and deploy ML models, work with large datasets, and contribute to our NLP and computer vision projects.",
+        "required_skills": ["python", "tensorflow", "pytorch", "machine learning", "deep learning", "nlp"],
+        "location": "Boston, MA",
+        "job_type": "internship"
+    },
+    {
+        "title": "DevOps Engineer",
+        "company": "Infrastructure Masters",
+        "description": "Looking for a DevOps Engineer to manage our cloud infrastructure and CI/CD pipelines. You'll work with AWS, Docker, Kubernetes, and various automation tools to ensure smooth deployments and high availability.",
+        "required_skills": ["aws", "docker", "kubernetes", "linux", "ci/cd", "python"],
+        "location": "Denver, CO",
+        "job_type": "full-time"
+    },
+    {
+        "title": "Mobile Developer Intern",
+        "company": "AppGenius",
+        "description": "Join our mobile team to build cross-platform mobile applications. You'll work with Flutter and contribute to both iOS and Android app development. Perfect for someone passionate about mobile technology.",
+        "required_skills": ["flutter", "dart", "mobile development", "rest api", "git"],
+        "location": "Remote",
+        "job_type": "internship"
+    },
+    {
+        "title": "Junior Full Stack Developer",
+        "company": "Digital Solutions Co.",
+        "description": "Entry-level position for a Full Stack Developer. You'll work on web applications using Next.js, Node.js, and PostgreSQL. Great opportunity to learn and grow with mentorship from senior developers.",
+        "required_skills": ["javascript", "next.js", "node.js", "postgresql", "react", "git"],
+        "location": "Chicago, IL",
+        "job_type": "full-time"
+    },
+    {
+        "title": "QA Automation Intern",
+        "company": "TestPro Solutions",
+        "description": "Help us ensure software quality as a QA Automation Intern. You'll write automated tests, perform manual testing, and work with our development team to maintain high code quality standards.",
+        "required_skills": ["python", "testing", "automation", "selenium", "git"],
+        "location": "Remote",
+        "job_type": "internship"
+    },
+    {
+        "title": "Cloud Engineer",
+        "company": "SkyTech Cloud",
+        "description": "Seeking a Cloud Engineer to design and implement cloud solutions on Azure. You'll work with infrastructure as code, manage cloud resources, and optimize for cost and performance.",
+        "required_skills": ["azure", "terraform", "docker", "kubernetes", "python", "ci/cd"],
+        "location": "Redmond, WA",
+        "job_type": "full-time"
+    },
+    {
+        "title": "AI Research Intern",
+        "company": "DeepMind Labs",
+        "description": "Contribute to groundbreaking AI research as an intern. You'll work on research projects involving deep learning, reinforcement learning, and natural language processing. Strong academic background required.",
+        "required_skills": ["python", "deep learning", "pytorch", "tensorflow", "machine learning", "nlp"],
+        "location": "San Francisco, CA",
+        "job_type": "internship"
+    },
+    {
+        "title": "Web Developer",
+        "company": "Creative Web Studios",
+        "description": "Looking for a creative Web Developer to build modern websites and web applications. Experience with React, Node.js, and responsive design is essential. Portfolio required.",
+        "required_skills": ["html", "css", "javascript", "react", "node.js", "responsive design"],
+        "location": "Los Angeles, CA",
+        "job_type": "full-time"
+    },
+    {
+        "title": "Python Developer Intern",
+        "company": "CodeCraft Inc.",
+        "description": "Internship opportunity for Python enthusiasts. You'll work on backend systems, automation scripts, and data processing pipelines. Great learning environment with hands-on projects.",
+        "required_skills": ["python", "django", "flask", "sql", "git"],
+        "location": "Remote",
+        "job_type": "internship"
+    },
+    {
+        "title": "Software Engineer - Frontend",
+        "company": "UserExperience Co.",
+        "description": "Join our frontend team to create exceptional user interfaces. You'll work with React, TypeScript, and modern design systems. 2+ years of experience with frontend technologies required.",
+        "required_skills": ["react", "typescript", "javascript", "css", "tailwind", "next.js"],
+        "location": "Portland, OR",
+        "job_type": "full-time"
+    }
+]
