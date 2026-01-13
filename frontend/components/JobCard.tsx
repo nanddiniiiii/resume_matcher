@@ -1,7 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { JobMatch } from '@/lib/types'
+import { useAuth } from '@/contexts/AuthContext'
+import toast from 'react-hot-toast'
 
 interface JobCardProps {
   match: JobMatch
@@ -10,7 +13,66 @@ interface JobCardProps {
 
 export default function JobCard({ match, rank }: JobCardProps) {
   const [expanded, setExpanded] = useState(false)
+  const [savingJob, setSavingJob] = useState(false)
+  const [trackingApp, setTrackingApp] = useState(false)
   const { job, explanation, matching_skills, missing_skills } = match
+  const { token } = useAuth()
+  const router = useRouter()
+
+  const handleSaveJob = async () => {
+    setSavingJob(true)
+    try {
+      const response = await fetch(`http://localhost:8000/api/jobs/${job.id}/save`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (response.ok) {
+        toast.success('Job saved successfully!')
+      } else {
+        const error = await response.json()
+        toast.error(error.detail || 'Failed to save job')
+      }
+    } catch (error) {
+      console.error('Save error:', error)
+      toast.error('Error saving job')
+    } finally {
+      setSavingJob(false)
+    }
+  }
+
+  const handleTrackApplication = async () => {
+    setTrackingApp(true)
+    try {
+      const response = await fetch('http://localhost:8000/api/applications/', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          job_id: job.id,
+          status: 'applied',
+        }),
+      })
+
+      if (response.ok) {
+        toast.success('Application tracked successfully!')
+        router.push('/applications')
+      } else {
+        const error = await response.json()
+        toast.error(error.detail || 'Failed to track application')
+      }
+    } catch (error) {
+      console.error('Track application error:', error)
+      toast.error('Error tracking application')
+    } finally {
+      setTrackingApp(false)
+    }
+  }
 
   // Get quality badge color
   const getQualityColor = (quality: string) => {
@@ -102,7 +164,7 @@ export default function JobCard({ match, rank }: JobCardProps) {
         {/* Toggle Details Button */}
         <button
           onClick={() => setExpanded(!expanded)}
-          className="w-full flex items-center justify-center py-2 px-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+          className="w-full flex items-center justify-center py-2 px-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors mb-4"
         >
           <span className="text-sm font-medium text-gray-700">
             {expanded ? 'Hide Details' : 'Show Details'}
@@ -115,6 +177,24 @@ export default function JobCard({ match, rank }: JobCardProps) {
             <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
           </svg>
         </button>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={handleSaveJob}
+            disabled={savingJob}
+            className="flex-1 px-4 py-3 border-2 border-purple-600 text-purple-600 font-semibold rounded-lg hover:bg-purple-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {savingJob ? 'Saving...' : '⭐ Save Job'}
+          </button>
+          <button
+            onClick={handleTrackApplication}
+            disabled={trackingApp}
+            className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {trackingApp ? 'Tracking...' : '📋 Track Application'}
+          </button>
+        </div>
       </div>
 
       {/* Expanded Details */}
