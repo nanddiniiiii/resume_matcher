@@ -1,236 +1,137 @@
-# AI-Powered Job Recommendation Platform
+# AI Job Matcher
 
-🎯 **A full-stack web application that uses AI to match candidates with relevant jobs and internships**
+Full-stack application for resume-based job discovery using semantic matching, explainable recommendations, and job-tracking workflows.
 
-This project demonstrates real-world application of AI/ML, full-stack development, and explainable AI principles. Perfect for showcasing on your resume and in interviews.
+## What This Project Does
 
-## 🌟 Key Features
+- Uploads and parses PDF resumes.
+- Generates resume/job embeddings for semantic similarity matching.
+- Returns ranked matches with matching skills, missing skills, and explanations.
+- Supports user authentication (JWT), saved jobs, and application tracking.
+- Includes job search and admin scraping endpoints for refreshing listings.
+- Provides resume optimization tips against a selected job (ATS-style analysis).
 
-- **Resume Analysis** - Upload PDF resumes and extract skills, education, and experience
-- **Semantic Job Matching** - AI-powered matching using sentence embeddings and cosine similarity
-- **Explainable AI** - Clear explanations for why each job matches, including skill gaps
-- **Modern Tech Stack** - Next.js, FastAPI, PostgreSQL, and Sentence Transformers
-- **Professional UI** - Clean, responsive interface built with Tailwind CSS
+## Stack
 
-## 🏗️ Architecture
+- Frontend: Next.js 14, React 18, TypeScript, Tailwind CSS
+- Backend: FastAPI, SQLAlchemy, Pydantic
+- Database: PostgreSQL
+- AI/NLP: sentence-transformers, scikit-learn, spaCy, pdfplumber
+- Scraping: requests, beautifulsoup4, aiohttp
 
+## Implemented Feature Areas
+
+### Candidate Workflow
+
+- Resume upload and parsing (`/api/resumes/upload`)
+- Top-N semantic matches (`/api/matches/{resume_id}`)
+- Match explanations (score, matching skills, missing skills)
+- Saved jobs (`/api/jobs/{job_id}/save`, `/api/jobs/saved`)
+- Application tracking (`/api/applications`)
+- Account stats and activity (`/api/users/stats`)
+
+### Job Data Workflow
+
+- CRUD + search endpoints for jobs (`/api/jobs`, `/api/jobs/search`)
+- Background scraping trigger (`/api/scraper/run`)
+- Scraper status and expiration management (`/api/scraper/status`, `/api/scraper/mark-expired`)
+
+### Resume Optimization Workflow
+
+- Resume-vs-job analyzer (`/api/resume-analyzer/analyze`)
+- Quick tips endpoint (`/api/resume-analyzer/quick-tips/{job_id}`)
+
+## Architecture
+
+```text
+Frontend (Next.js)
+         |
+         v
+Backend API (FastAPI)
+         |
+         +--> Auth + User features
+         +--> Resume parsing + Matching services
+         +--> Job search + Scraping services
+         |
+         v
+PostgreSQL (users, resumes, jobs, matches, saved_jobs, applications)
 ```
-┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
-│   Next.js UI    │ ──────> │  FastAPI Backend│ ──────> │   PostgreSQL    │
-│   (Frontend)    │ <────── │   (Python API)  │ <────── │   (Database)    │
-└─────────────────┘         └─────────────────┘         └─────────────────┘
-                                    │
-                                    │
-                            ┌───────▼───────┐
-                            │  AI Services  │
-                            │  • pdfplumber │
-                            │  • spaCy      │
-                            │  • Sentence   │
-                            │    Transformers│
-                            └───────────────┘
+
+## Repository Layout
+
+```text
+proj_interview/
+        backend/
+                app/
+                        api/
+                        models/
+                        services/
+                        auth.py
+                        config.py
+                        database.py
+                main.py
+                init_db.py
+                requirements.txt
+        frontend/
+                app/
+                components/
+                contexts/
+                lib/
+                package.json
 ```
 
-## 🚀 Quick Start
+## Local Setup
 
-### Prerequisites
+### 1. Backend
 
-- Python 3.9+
-- Node.js 18+
-- PostgreSQL 14+
-
-### Backend Setup
-
-```bash
+```powershell
 cd backend
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Download spaCy model
 python -m spacy download en_core_web_sm
-
-# Configure database
-cp .env.example .env
-# Edit .env with your database credentials
-
-# Initialize database with sample jobs
 python init_db.py
-
-# Start server
 python main.py
 ```
 
-Backend will run on `http://localhost:8000`
+Backend runs at http://localhost:8000
+Swagger docs: http://localhost:8000/docs
 
-### Frontend Setup
+### 2. Frontend
 
-```bash
+```powershell
 cd frontend
-
-# Install dependencies
 npm install
-
-# Configure environment
-cp .env.local.example .env.local
-
-# Start development server
 npm run dev
 ```
 
-Frontend will run on `http://localhost:3000`
+Frontend runs at http://localhost:3000
 
-## 📖 Usage
+## Configuration Notes
 
-1. **Upload Resume**: Navigate to the home page and upload a PDF resume
-2. **View Analysis**: See extracted skills, education, and experience
-3. **Get Matches**: AI automatically finds and ranks relevant jobs
-4. **Explore Details**: Click on jobs to see detailed match explanations
-5. **Identify Gaps**: Understand which skills you have and which to develop
+- Backend defaults are in `backend/app/config.py`.
+- Frontend includes `NEXT_PUBLIC_API_URL` support.
+- Some frontend pages currently call `http://localhost:8000` directly, so local backend on port 8000 is expected unless those calls are refactored.
 
-## 🛠️ Tech Stack
+## API Summary
 
-### Frontend
-- **Next.js 14** - React framework with App Router
-- **TypeScript** - Type-safe development
-- **Tailwind CSS** - Modern styling
-- **Axios** - HTTP client
+- Auth: `/api/auth/register`, `/api/auth/login`, `/api/auth/login/json`, `/api/auth/me`
+- Resumes: `/api/resumes/upload`, `/api/resumes`, `/api/resumes/{id}`
+- Matches: `/api/matches/{resume_id}`, `/api/matches/history/{resume_id}`
+- Jobs: `/api/jobs`, `/api/jobs/search`, `/api/jobs/{id}`
+- Saved jobs: `/api/jobs/{job_id}/save`, `/api/jobs/saved`
+- Applications: `/api/applications`
+- User stats: `/api/users/stats`
+- Scraper: `/api/scraper/run`, `/api/scraper/status`, `/api/scraper/mark-expired`, `/api/scraper/sources`
+- Resume analyzer: `/api/resume-analyzer/analyze`, `/api/resume-analyzer/quick-tips/{job_id}`
 
-### Backend
-- **FastAPI** - Modern Python web framework
-- **SQLAlchemy** - Database ORM
-- **PostgreSQL** - Relational database
-- **pdfplumber** - PDF text extraction
-- **spaCy** - Natural language processing
-- **Sentence Transformers** - Generate embeddings
-- **scikit-learn** - Cosine similarity
+## Resume-Ready Highlights
 
-## 📁 Project Structure
+- Built an end-to-end AI job matching product with Next.js + FastAPI + PostgreSQL.
+- Implemented semantic ranking using sentence embeddings and cosine similarity.
+- Added explainable matching output with skill overlap and gap insights.
+- Developed authenticated user workflows: saved jobs, application tracking, and profile stats.
+- Extended the platform with job scraping and resume optimization analysis endpoints.
 
-```
-proj_interview/
-├── backend/
-│   ├── app/
-│   │   ├── api/              # API endpoints
-│   │   ├── models/           # Database models
-│   │   ├── services/         # Business logic
-│   │   ├── config.py         # Configuration
-│   │   └── database.py       # Database setup
-│   ├── data/                 # Sample data
-│   ├── uploads/              # Uploaded resumes
-│   ├── main.py              # Entry point
-│   ├── init_db.py           # Database initialization
-│   └── requirements.txt     # Python dependencies
-├── frontend/
-│   ├── app/                 # Next.js pages
-│   ├── components/          # React components
-│   ├── lib/                 # Utilities
-│   └── package.json         # Node dependencies
-└── README.md
-```
+## Current Status
 
-## 🧠 How It Works
-
-### 1. Resume Parsing
-- Extract text from PDF using `pdfplumber`
-- Identify skills using keyword matching and NLP
-- Extract education and experience with pattern matching
-
-### 2. Semantic Matching
-- Convert resume text to embedding vector (384 dimensions)
-- Convert job descriptions to embedding vectors
-- Calculate cosine similarity between vectors
-- Rank jobs by similarity score
-
-### 3. Explainable AI
-- Compare candidate skills with job requirements
-- Identify matching and missing skills
-- Generate human-readable explanations
-- Provide match quality scores and recommendations
-
-## 📊 API Endpoints
-
-### Resumes
-- `POST /resumes/upload` - Upload and parse resume
-- `GET /resumes/{id}` - Get resume details
-- `DELETE /resumes/{id}` - Delete resume
-
-### Jobs
-- `POST /jobs/` - Create job posting
-- `GET /jobs/` - List all jobs
-- `GET /jobs/{id}` - Get job details
-
-### Matching (Core Feature)
-- `GET /matches/{resume_id}` - Get job recommendations
-- `GET /matches/history/{resume_id}` - View match history
-
-Full API documentation available at `http://localhost:8000/docs`
-
-## 🎨 Screenshots
-
-The application features:
-- Modern, responsive design
-- Intuitive resume upload with drag & drop
-- Visual match quality indicators
-- Detailed skill breakdown
-- Expandable job cards with full explanations
-
-## 🚢 Deployment
-
-### Backend (Render/Railway)
-1. Push code to GitHub
-2. Create new web service
-3. Set environment variables
-4. Deploy!
-
-### Frontend (Vercel)
-1. Import GitHub repository
-2. Set `NEXT_PUBLIC_API_URL` environment variable
-3. Deploy!
-
-### Database (Managed PostgreSQL)
-- Use Render, Railway, or Supabase
-- Update `DATABASE_URL` in backend
-
-## 📝 Resume Bullet Points
-
-Use these on your resume:
-
-- Built a full-stack job recommendation platform using Next.js and FastAPI with AI-powered semantic matching
-- Implemented NLP-based resume parsing and skill extraction using spaCy and sentence embeddings
-- Designed explainable AI system highlighting skill overlap and gaps, achieving 85%+ match accuracy
-- Deployed scalable application with PostgreSQL backend and cloud hosting (Vercel/Render)
-
-## 🎯 Learning Outcomes
-
-This project demonstrates:
-✅ Full-stack development (Frontend + Backend + Database)
-✅ RESTful API design
-✅ AI/ML integration (embeddings, similarity matching)
-✅ NLP techniques (text extraction, skill parsing)
-✅ Explainable AI principles
-✅ Database design and ORM usage
-✅ Modern web development practices
-✅ Deployment and DevOps basics
-
-## 🤝 Contributing
-
-This is a learning project. Feel free to:
-- Add more sophisticated NLP features
-- Implement user authentication
-- Add job application tracking
-- Integrate real job boards APIs
-- Improve matching algorithms
-
-## 📄 License
-
-MIT License - feel free to use this project for learning and portfolio purposes.
-
-## 🙋 Questions?
-
-This project is designed to be:
-- **Achievable** - Can be built in 4-5 weeks
-- **Practical** - Solves real-world problems
-- **Impressive** - Demonstrates valuable skills
-- **Resume-worthy** - Perfect for interviews
-
-Start building and good luck with your job search! 🚀
+- Git remote is configured for this project repository.
+- If you want, this repo can be pushed directly and used as a resume project link.

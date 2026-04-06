@@ -62,54 +62,59 @@ def list_jobs(
 
 @router.get("/search")
 async def search_jobs(
-    q: Optional[str] = Query(None, description="Search query for title/company/description"),
-    skills: Optional[List[str]] = Query(None, description="Filter by required skills"),
+    query: Optional[str] = Query(None, alias="query", description="Search query for title/company/description"),
+    skills: Optional[str] = Query(None, description="Comma-separated skills to filter by"),
     location: Optional[str] = Query(None, description="Filter by location"),
     job_type: Optional[str] = Query(None, description="Filter by job type"),
-    skip: int = 0,
-    limit: int = 20,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db)
 ):
     """
     Advanced job search with multiple filters.
     Supports text search, skills matching, location, and job type.
     """
-    query = db.query(Job)
+    db_query = db.query(Job)
     
     # Text search in title, company, description
-    if q:
+    if query:
         search_filter = or_(
-            Job.title.ilike(f"%{q}%"),
-            Job.company.ilike(f"%{q}%"),
-            Job.description.ilike(f"%{q}%")
+            Job.title.ilike(f"%{query}%"),
+            Job.company.ilike(f"%{query}%"),
+            Job.description.ilike(f"%{query}%")
         )
-        query = query.filter(search_filter)
+        db_query = db_query.filter(search_filter)
     
-    # Skills filter
+    # Skills filter - parse comma-separated string
     if skills:
-        skill_filters = []
-        for skill in skills:
-            skill_filters.append(
-                func.jsonb_exists(Job.skills_required, skill)
-            )
-        query = query.filter(or_(*skill_filters))
+        skills_list = [s.strip().lower() for s in skills.split(",") if s.strip()]
+        if skills_list:
+            # Filter jobs that have any of the requested skills
+            skill_conditions = []
+            for skill in skills_list:
+                # Case-insensitive search in the JSON array
+                skill_conditions.append(
+                    func.lower(func.cast(Job.required_skills, String)).contains(skill.lower())
+                )
+            db_query = db_query.filter(or_(*skill_conditions))
     
     # Location filter
     if location:
-        query = query.filter(Job.location.ilike(f"%{location}%"))
+        db_query = db_query.filter(Job.location.ilike(f"%{location}%"))
     
-    # Job type filter
-    if job_type:
-        query = query.filter(Job.job_type == job_type)
+    # Job type filter (case-insensitive)
+    if job_type and job_type.lower() != "all types":
+        db_query = db_query.filter(func.lower(Job.job_type) == job_type.lower())
     
     # Order by most recent
-    query = query.order_by(Job.created_at.desc())
+    db_query = db_query.order_by(Job.created_at.desc())
     
     # Count total
-    total = query.count()
+    total = db_query.count()
     
     # Apply pagination
-    jobs = query.offset(skip).limit(limit).all()
+    skip = (page - 1) * page_size
+    jobs = db_query.offset(skip).limit(page_size).all()
     
     return {
         "jobs": [
@@ -118,17 +123,16 @@ async def search_jobs(
                 "title": job.title,
                 "company": job.company,
                 "location": job.location,
-                "salary_range": job.salary_range,
                 "job_type": job.job_type,
-                "skills_required": job.skills_required,
-                "description": job.description[:200] + "..." if len(job.description) > 200 else job.description,
+                "required_skills": job.required_skills,
+                "description": job.description,
                 "created_at": job.created_at.isoformat()
             }
             for job in jobs
         ],
         "total": total,
-        "page": skip // limit + 1,
-        "pages": (total + limit - 1) // limit
+        "page": page,
+        "pages": (total + page_size - 1) // page_size if total > 0 else 0
     }
 
 

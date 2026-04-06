@@ -25,6 +25,12 @@ export interface Job {
   location: string
   job_type: string
   created_at: string
+  source?: string | null
+  source_url?: string | null
+  source_job_id?: string | null
+  scraped_at?: string | null
+  expires_at?: string | null
+  is_active?: boolean
 }
 
 export interface JobMatchExplanation {

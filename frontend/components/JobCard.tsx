@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation'
 import { JobMatch } from '@/lib/types'
 import { useAuth } from '@/contexts/AuthContext'
 import toast from 'react-hot-toast'
+import JobFreshnessBadge from './JobFreshnessBadge'
+import JobSourceBadge from './JobSourceBadge'
+import ResumeTips from './ResumeTips'
 
 interface JobCardProps {
   match: JobMatch
@@ -122,6 +125,14 @@ export default function JobCard({ match, rank }: JobCardProps) {
                   {job.job_type}
                 </span>
               )}
+              <JobFreshnessBadge 
+                scrapedAt={job.scraped_at || null} 
+                isActive={job.is_active !== false} 
+              />
+              <JobSourceBadge 
+                source={job.source || null} 
+                sourceUrl={job.source_url || null} 
+              />
             </div>
           </div>
           <div className="text-right ml-4">
@@ -179,21 +190,36 @@ export default function JobCard({ match, rank }: JobCardProps) {
         </button>
 
         {/* Action Buttons */}
-        <div className="flex gap-3">
-          <button
-            onClick={handleSaveJob}
-            disabled={savingJob}
-            className="flex-1 px-4 py-3 border-2 border-purple-600 text-purple-600 font-semibold rounded-lg hover:bg-purple-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {savingJob ? 'Saving...' : '⭐ Save Job'}
-          </button>
-          <button
-            onClick={handleTrackApplication}
-            disabled={trackingApp}
-            className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {trackingApp ? 'Tracking...' : '📋 Track Application'}
-          </button>
+        <div className="space-y-3">
+          <div className="flex gap-3">
+            <button
+              onClick={handleSaveJob}
+              disabled={savingJob}
+              className="flex-1 px-4 py-3 border-2 border-purple-600 text-purple-600 font-semibold rounded-lg hover:bg-purple-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {savingJob ? 'Saving...' : '⭐ Save Job'}
+            </button>
+            <button
+              onClick={handleTrackApplication}
+              disabled={trackingApp}
+              className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {trackingApp ? 'Tracking...' : '📋 Track Application'}
+            </button>
+          </div>
+          <div className="flex gap-3">
+            <ResumeTips jobId={job.id} jobTitle={job.title} />
+            {job.source_url && (
+              <a
+                href={job.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium text-center"
+              >
+                🔗 Apply on Company Site
+              </a>
+            )}
+          </div>
         </div>
       </div>
 

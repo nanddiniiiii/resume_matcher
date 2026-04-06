@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import engine, Base
-from app.api import resumes, jobs, matches, auth, saved_jobs, applications, users
+from app.api import resumes, jobs, matches, auth, saved_jobs, applications, users, scraper, resume_analyzer
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -10,8 +10,8 @@ Base.metadata.create_all(bind=engine)
 # Initialize FastAPI app
 app = FastAPI(
     title="AI Job Matcher API",
-    description="AI-powered job recommendation platform using semantic matching",
-    version="2.0.0"
+    description="AI-powered job recommendation platform using semantic matching with real-time job scraping",
+    version="2.1.0"
 )
 
 # Configure CORS
@@ -31,6 +31,8 @@ app.include_router(matches.router, prefix="/api")
 app.include_router(saved_jobs.router)  # Already has /api/jobs prefix
 app.include_router(applications.router)  # Already has /api/applications prefix
 app.include_router(users.router)  # Already has /api/users prefix
+app.include_router(scraper.router, prefix="/api")  # Job scraper endpoints
+app.include_router(resume_analyzer.router, prefix="/api")  # Resume analyzer endpoints
 
 
 @app.get("/")
@@ -39,7 +41,8 @@ def root():
     return {
         "message": "AI Job Matcher API",
         "status": "running",
-        "version": "1.0.0"
+        "version": "2.1.0",
+        "features": ["semantic_matching", "job_scraping", "resume_analysis"]
     }
 
 
