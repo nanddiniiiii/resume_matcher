@@ -123,7 +123,6 @@ Frontend runs at http://localhost:3000
 - Scraper: `/api/scraper/run`, `/api/scraper/status`, `/api/scraper/mark-expired`, `/api/scraper/sources`
 - Resume analyzer: `/api/resume-analyzer/analyze`, `/api/resume-analyzer/quick-tips/{job_id}`
 
-## Resume-Ready Highlights
 
 - Built an end-to-end AI job matching product with Next.js + FastAPI + PostgreSQL.
 - Implemented semantic ranking using sentence embeddings and cosine similarity.
@@ -131,7 +130,3 @@ Frontend runs at http://localhost:3000
 - Developed authenticated user workflows: saved jobs, application tracking, and profile stats.
 - Extended the platform with job scraping and resume optimization analysis endpoints.
 
-## Current Status
-
-- Git remote is configured for this project repository.
-- If you want, this repo can be pushed directly and used as a resume project link.
