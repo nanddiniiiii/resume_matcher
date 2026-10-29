@@ -1,31 +1,35 @@
 # Web Framework
-fastapi>=0.109.0
-uvicorn[standard]>=0.27.0
-python-multipart>=0.0.6
+fastapi==0.162.0
+uvicorn[standard]==0.49.0
+python-multipart==0.0.32
 
 # Database
-sqlalchemy>=2.0.25
-psycopg2-binary>=2.9.9
-alembic>=1.13.1
+sqlalchemy==2.1.6
+psycopg2-binary==2.9.10
 
 # PDF Processing
-pdfplumber>=0.10.3
+pdfplumber==0.11.10
 
-# NLP & AI (Python 3.13 compatible versions)
-spacy>=3.8.0
-sentence-transformers>=3.0.0
-scikit-learn>=1.5.0
-# Skip torch for now - sentence-transformers will install compatible version
+# NLP & AI
+sentence-transformers==5.1.1
+scikit-learn==1.7.1
+# sentence-transformers installs PyTorch
 
 # Utilities
-python-dotenv>=1.0.0
-pydantic>=2.5.3
-pydantic-settings>=2.1.0
+python-dotenv==1.2.4
+pydantic==2.13.4
+pydantic-settings==2.16.2
 
 # Web Scraping & HTTP
-requests>=2.31.0
-beautifulsoup4>=4.12.0
-aiohttp>=3.9.0
+requests==2.32.5
+beautifulsoup4==4.14.3
 
-# Job Scheduling
-apscheduler>=3.10.4
+
+# Authentication and email validation
+python-jose[cryptography]==3.5.0
+bcrypt==5.0.0
+email-validator==2.3.0
+
+# Keep Transformer inference compatible with the tested runtime.
+transformers==4.56.2
+torch==2.12.1

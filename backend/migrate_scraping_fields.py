@@ -3,8 +3,8 @@ Database Migration Script - Add Scraping Fields to Jobs Table
 Adds: source, source_url, source_job_id, scraped_at, expires_at, is_active
 """
 
-from sqlalchemy import create_engine, text
-from app.config import settings
+from sqlalchemy import text
+from app.database import engine
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 def migrate():
     """Add scraping-related fields to jobs table"""
-    engine = create_engine(settings.DATABASE_URL)
     
     migrations = [
         "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS source VARCHAR",
@@ -31,16 +30,10 @@ def migrate():
     ]
     
     try:
-        with engine.connect() as conn:
+        with engine.begin() as conn:
             for migration_sql in migrations:
-                try:
-                    logger.info(f"Executing: {migration_sql}")
-                    conn.execute(text(migration_sql))
-                    conn.commit()
-                    logger.info("✓ Success")
-                except Exception as e:
-                    logger.warning(f"Migration already applied or error: {e}")
-        
+                conn.execute(text(migration_sql))
+
         logger.info("✅ All migrations completed successfully!")
         
     except Exception as e:

@@ -19,14 +19,14 @@ export default function RegisterPage() {
     setLoading(true)
 
     // Validate password length (bcrypt limit is 72 bytes)
-    if (password.length > 72) {
-      setError('Password too long. Maximum 72 characters.')
+    if (new TextEncoder().encode(password).length > 72) {
+      setError('Password too long. Maximum 72 UTF-8 bytes.')
       setLoading(false)
       return
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters')
       setLoading(false)
       return
     }
@@ -104,10 +104,10 @@ export default function RegisterPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 placeholder="••••••••"
-                minLength={6}
+                minLength={8}
                 maxLength={72}
               />
-              <p className="mt-1 text-xs text-gray-500">6-72 characters</p>
+              <p className="mt-1 text-xs text-gray-500">8-72 characters (maximum 72 UTF-8 bytes)</p>
             </div>
           </div>
 

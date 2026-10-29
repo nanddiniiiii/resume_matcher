@@ -1,6 +1,8 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
+import { API_BASE_URL } from '@/lib/config';
+
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -25,8 +27,9 @@ interface SearchFilters {
 }
 
 export default function JobSearchPage() {
-  const { isAuthenticated, token } = useAuth();
-  const { theme } = useTheme();
+  const { isAuthenticated, token, loading: authLoading } = useAuth();
+  const { isDarkMode } = useTheme();
+  const theme = isDarkMode ? 'dark' : 'light';
   const router = useRouter();
 
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -37,30 +40,30 @@ export default function JobSearchPage() {
     location: '',
     job_type: '',
   });
+  const [appliedFilters, setAppliedFilters] = useState<SearchFilters>(filters);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [savingJobId, setSavingJobId] = useState<number | null>(null);
   const [applyingJobId, setApplyingJobId] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [authLoading, isAuthenticated, router]);
 
-  const searchJobs = async () => {
-    setLoading(true);
+  const searchJobs = useCallback(async () => {
     try {
       const params = new URLSearchParams();
-      if (filters.query) params.append('query', filters.query);
-      if (filters.skills) params.append('skills', filters.skills);
-      if (filters.location) params.append('location', filters.location);
-      if (filters.job_type) params.append('job_type', filters.job_type);
+      if (appliedFilters.query) params.append('query', appliedFilters.query);
+      if (appliedFilters.skills) params.append('skills', appliedFilters.skills);
+      if (appliedFilters.location) params.append('location', appliedFilters.location);
+      if (appliedFilters.job_type) params.append('job_type', appliedFilters.job_type);
       params.append('page', page.toString());
       params.append('page_size', '10');
 
       const response = await fetch(
-        `http://localhost:8000/api/jobs/search?${params.toString()}`,
+        `${API_BASE_URL}/api/jobs/search?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -81,24 +84,26 @@ export default function JobSearchPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [appliedFilters, page, token]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      searchJobs();
-    }
-  }, [page, isAuthenticated]);
+    const launch = window.setTimeout(() => {
+      if (isAuthenticated) void searchJobs();
+    }, 0);
+    return () => window.clearTimeout(launch);
+  }, [searchJobs, isAuthenticated]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
-    searchJobs();
+    setAppliedFilters({ ...filters });
+    setLoading(true);
   };
 
   const handleSaveJob = async (jobId: number) => {
     setSavingJobId(jobId);
     try {
-      const response = await fetch(`http://localhost:8000/api/jobs/${jobId}/save`, {
+      const response = await fetch(`${API_BASE_URL}/api/jobs/${jobId}/save`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -123,7 +128,7 @@ export default function JobSearchPage() {
   const handleTrackApplication = async (jobId: number) => {
     setApplyingJobId(jobId);
     try {
-      const response = await fetch('http://localhost:8000/api/applications/', {
+      const response = await fetch(`${API_BASE_URL}/api/applications/`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -167,7 +172,7 @@ export default function JobSearchPage() {
     setPage(1);
   };
 
-  if (!isAuthenticated) {
+  if (!authLoading && !isAuthenticated) {
     return null;
   }
 

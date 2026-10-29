@@ -4,15 +4,15 @@ Creates 50+ jobs across different tech categories.
 """
 from app.database import SessionLocal
 from app.models.job import Job
-import json
+from app.services.job_matcher import JobMatcher
 
 
 def add_sample_jobs():
     db = SessionLocal()
-    
+
     # Simpler format matching Job model: title, company, description, required_skills, location, job_type
     jobs_data = []
-    
+
     # Frontend (10)
     frontend_jobs = [
         ("Senior React Developer", "TechCorp", "Build modern web apps with React, TypeScript, and Next.js. 5+ years experience required.", ["React", "TypeScript", "Next.js", "Redux"], "Remote", "remote"),
@@ -26,7 +26,7 @@ def add_sample_jobs():
         ("Accessibility Specialist", "Inclusive Tech", "WCAG compliance and accessibility audits. Screen reader testing.", ["Accessibility", "HTML", "JavaScript", "ARIA", "WCAG"], "Chicago, IL", "remote"),
         ("Frontend Architect", "Enterprise Web", "Lead frontend architecture. 8+ years experience, leadership skills.", ["React", "TypeScript", "Architecture", "Leadership"], "San Jose, CA", "hybrid"),
     ]
-    
+
     # Backend (10)
     backend_jobs = [
         ("Senior Python Engineer", "DataFlow", "FastAPI microservices with PostgreSQL. 5+ years Python experience.", ["Python", "FastAPI", "PostgreSQL", "Docker", "Redis"], "Remote", "remote"),
@@ -40,7 +40,7 @@ def add_sample_jobs():
         ("Database Engineer", "Data Systems", "PostgreSQL and MySQL optimization. Replication and backup.", ["PostgreSQL", "MySQL", "SQL", "Redis", "MongoDB"], "Austin, TX", "hybrid"),
         ("GraphQL Developer", "Modern APIs", "GraphQL APIs with Node.js. Apollo Server and schema design.", ["GraphQL", "Node.js", "Apollo", "TypeScript", "PostgreSQL"], "Boston, MA", "remote"),
     ]
-    
+
     # Data Science (10)
     ds_jobs = [
         ("Machine Learning Engineer", "AI Innovations", "ML models with PyTorch/TensorFlow. MLOps and AWS SageMaker.", ["Python", "Machine Learning", "PyTorch", "TensorFlow", "AWS"], "San Francisco, CA", "hybrid"),
@@ -54,7 +54,7 @@ def add_sample_jobs():
         ("Recommendation Engineer", "Personalization Tech", "Recommendation engines with collaborative filtering and ML.", ["Python", "Machine Learning", "TensorFlow", "Spark", "SQL"], "San Francisco, CA", "hybrid"),
         ("Time Series Analyst", "Forecasting Solutions", "Forecasting models. ARIMA, Prophet, deep learning.", ["Python", "R", "Time Series", "Statistics", "Prophet"], "New York, NY", "remote"),
     ]
-    
+
     # DevOps (10)
     devops_jobs = [
         ("Senior DevOps Engineer", "Cloud Infrastructure", "AWS, Terraform, Kubernetes. 5+ years DevOps experience.", ["DevOps", "AWS", "Kubernetes", "Terraform", "Docker"], "Seattle, WA", "remote"),
@@ -68,7 +68,7 @@ def add_sample_jobs():
         ("Observability Engineer", "Telemetry Systems", "Monitoring with Prometheus, Grafana, ELK stack.", ["Prometheus", "Grafana", "ELK", "Monitoring", "Kubernetes"], "Chicago, IL", "remote"),
         ("Network Engineer", "Network Infrastructure", "VPNs, load balancers, firewalls. Cloud networking.", ["Networking", "AWS", "VPN", "Load Balancing", "Linux"], "Dallas, TX", "hybrid"),
     ]
-    
+
     # Mobile (5)
     mobile_jobs = [
         ("iOS Developer", "Mobile Apps Studio", "Native iOS with Swift and SwiftUI. App Store publishing.", ["iOS", "Swift", "SwiftUI", "UIKit", "Xcode"], "Los Angeles, CA", "hybrid"),
@@ -77,7 +77,7 @@ def add_sample_jobs():
         ("Flutter Developer", "Dart Mobile", "Beautiful Flutter applications. Custom widgets and animations.", ["Flutter", "Dart", "Mobile Development", "Firebase"], "Austin, TX", "remote"),
         ("Mobile DevOps Engineer", "Mobile CI/CD", "Mobile pipelines with Fastlane. iOS/Android builds.", ["Mobile DevOps", "Fastlane", "CI/CD", "iOS", "Android"], "Seattle, WA", "remote"),
     ]
-    
+
     # Security (5)
     security_jobs = [
         ("Security Engineer", "CyberSec", "Penetration testing and security audits. OWASP expertise.", ["Security", "Penetration Testing", "OWASP", "Python", "Linux"], "Washington, DC", "hybrid"),
@@ -86,10 +86,10 @@ def add_sample_jobs():
         ("IAM Engineer", "IAM Solutions", "Okta, Active Directory, SSO, and MFA systems.", ["IAM", "Okta", "SAML", "OAuth", "Active Directory"], "Boston, MA", "remote"),
         ("Compliance Engineer", "Regulatory Tech", "SOC2, HIPAA, GDPR compliance programs.", ["Compliance", "SOC2", "HIPAA", "GDPR", "Auditing"], "Chicago, IL", "hybrid"),
     ]
-    
+
     # Combine all jobs
     all_job_tuples = frontend_jobs + backend_jobs + ds_jobs + devops_jobs + mobile_jobs + security_jobs
-    
+
     for title, company, description, skills, location, job_type in all_job_tuples:
         jobs_data.append({
             "title": title,
@@ -99,16 +99,25 @@ def add_sample_jobs():
             "location": location,
             "job_type": job_type
         })
-    
+
     print(f"Adding {len(jobs_data)} jobs to database...")
-    
-    for job_data in jobs_data:
-        job = Job(**job_data)
-        db.add(job)
-    
-    db.commit()
-    print(f"✅ Successfully added {len(jobs_data)} jobs!")
-    db.close()
+
+    try:
+        matcher = JobMatcher()
+        added = 0
+        for job_data in jobs_data:
+            if db.query(Job).filter(Job.title == job_data['title'], Job.company == job_data['company']).first():
+                continue
+            embedding = matcher.generate_embedding(matcher.prepare_job_text(job_data))
+            db.add(Job(**job_data, embedding=embedding, source="sample"))
+            added += 1
+        db.commit()
+        print(f"Added {added} sample jobs with embeddings")
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":

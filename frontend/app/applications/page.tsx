@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { API_BASE_URL } from "@/lib/config";
+
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import Header from "@/components/Header";
@@ -37,18 +39,13 @@ export default function ApplicationsPage() {
   const [newStatus, setNewStatus] = useState("");
   const [total, setTotal] = useState(0);
 
-  useEffect(() => {
-    if (token) {
-      fetchApplications();
-    }
-  }, [token, filter]);
 
-  const fetchApplications = async () => {
+
+  const fetchApplications = useCallback(async () => {
     try {
-      setLoading(true);
       const url = filter
-        ? `http://localhost:8000/api/applications/?status=${filter}`
-        : "http://localhost:8000/api/applications/";
+        ? `${API_BASE_URL}/api/applications/?status=${filter}`
+        : `${API_BASE_URL}/api/applications/`;
 
       const response = await fetch(url, {
         headers: {
@@ -66,12 +63,22 @@ export default function ApplicationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, filter])
+
+  useEffect(() => {
+    const launch = window.setTimeout(() => {
+    if (token) {
+      void fetchApplications();
+    } else { Promise.resolve().then(() => setLoading(false)); }
+
+    }, 0)
+    return () => window.clearTimeout(launch)
+  }, [fetchApplications, token])
 
   const handleUpdateStatus = async (appId: number, status: string) => {
     try {
       const response = await fetch(
-        `http://localhost:8000/api/applications/${appId}`,
+        `${API_BASE_URL}/api/applications/${appId}`,
         {
           method: "PUT",
           headers: {
@@ -97,7 +104,7 @@ export default function ApplicationsPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/api/applications/${appId}`,
+        `${API_BASE_URL}/api/applications/${appId}`,
         {
           method: "DELETE",
           headers: {

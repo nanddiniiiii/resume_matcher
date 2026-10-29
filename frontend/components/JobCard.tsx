@@ -1,5 +1,7 @@
 'use client'
 
+import { API_BASE_URL } from '@/lib/config'
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { JobMatch } from '@/lib/types'
@@ -12,9 +14,10 @@ import ResumeTips from './ResumeTips'
 interface JobCardProps {
   match: JobMatch
   rank: number
+  resumeId: number
 }
 
-export default function JobCard({ match, rank }: JobCardProps) {
+export default function JobCard({ match, rank, resumeId }: JobCardProps) {
   const [expanded, setExpanded] = useState(false)
   const [savingJob, setSavingJob] = useState(false)
   const [trackingApp, setTrackingApp] = useState(false)
@@ -25,7 +28,7 @@ export default function JobCard({ match, rank }: JobCardProps) {
   const handleSaveJob = async () => {
     setSavingJob(true)
     try {
-      const response = await fetch(`http://localhost:8000/api/jobs/${job.id}/save`, {
+      const response = await fetch(`${API_BASE_URL}/api/jobs/${job.id}/save`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -50,7 +53,7 @@ export default function JobCard({ match, rank }: JobCardProps) {
   const handleTrackApplication = async () => {
     setTrackingApp(true)
     try {
-      const response = await fetch('http://localhost:8000/api/applications/', {
+      const response = await fetch(`${API_BASE_URL}/api/applications/`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -58,7 +61,7 @@ export default function JobCard({ match, rank }: JobCardProps) {
         },
         body: JSON.stringify({
           job_id: job.id,
-          status: 'applied',
+          resume_id: resumeId,
         }),
       })
 
@@ -125,13 +128,13 @@ export default function JobCard({ match, rank }: JobCardProps) {
                   {job.job_type}
                 </span>
               )}
-              <JobFreshnessBadge 
-                scrapedAt={job.scraped_at || null} 
-                isActive={job.is_active !== false} 
+              <JobFreshnessBadge
+                scrapedAt={job.scraped_at || null}
+                isActive={job.is_active !== false}
               />
-              <JobSourceBadge 
-                source={job.source || null} 
-                sourceUrl={job.source_url || null} 
+              <JobSourceBadge
+                source={job.source || null}
+                sourceUrl={job.source_url || null}
               />
             </div>
           </div>
@@ -208,7 +211,7 @@ export default function JobCard({ match, rank }: JobCardProps) {
             </button>
           </div>
           <div className="flex gap-3">
-            <ResumeTips jobId={job.id} jobTitle={job.title} />
+            <ResumeTips resumeId={resumeId} jobId={job.id} jobTitle={job.title} />
             {job.source_url && (
               <a
                 href={job.source_url}

@@ -1,3 +1,5 @@
+> Historical notes. See [README.md](README.md) for current setup and behavior, and [docs/AUDIT.md](docs/AUDIT.md) for verified fixes and limitations.
+
 # Backend Improvements Documentation
 
 ## Overview

@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+import { useAuth } from '@/contexts/AuthContext'
 import { useState } from 'react'
 import { resumeAPI } from '@/lib/api'
 import toast from 'react-hot-toast'
@@ -9,6 +11,7 @@ interface ResumeUploadProps {
 }
 
 export default function ResumeUpload({ onUploadSuccess }: ResumeUploadProps) {
+  const { isAuthenticated, loading } = useAuth()
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -29,7 +32,7 @@ export default function ResumeUpload({ onUploadSuccess }: ResumeUploadProps) {
     e.preventDefault()
     e.stopPropagation()
     setDragActive(false)
-    
+
     const droppedFile = e.dataTransfer.files?.[0]
     if (droppedFile) {
       validateAndSetFile(droppedFile)
@@ -76,7 +79,7 @@ export default function ResumeUpload({ onUploadSuccess }: ResumeUploadProps) {
       const result = await resumeAPI.upload(file)
       setUploadResult(result)
       toast.success('Resume analyzed successfully!', { id: loadingToast })
-      
+
       // Show success message briefly, then navigate to matches
       setTimeout(() => {
         onUploadSuccess(result.id)
@@ -90,6 +93,9 @@ export default function ResumeUpload({ onUploadSuccess }: ResumeUploadProps) {
     }
   }
 
+  if (loading) return <p className="text-center">Checking your session...</p>
+  if (!isAuthenticated) return <p className="text-center"><Link href="/login" className="underline">Sign in</Link> or <Link href="/register" className="underline">create an account</Link> to upload your resume.</p>
+
   return (
     <div className="max-w-2xl mx-auto animate-fadeIn">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 transition-all duration-300 hover:shadow-xl">
@@ -98,10 +104,10 @@ export default function ResumeUpload({ onUploadSuccess }: ResumeUploadProps) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
             Upload Your Resume (PDF)
           </label>
-          <div 
+          <div
             className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-lg transition-all duration-300 ${
-              dragActive 
-                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' 
+              dragActive
+                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
                 : 'border-gray-300 dark:border-gray-600 hover:border-purple-400 dark:hover:border-purple-500'
             }`}
             onDragEnter={handleDrag}
@@ -204,7 +210,7 @@ export default function ResumeUpload({ onUploadSuccess }: ResumeUploadProps) {
         <button
           onClick={handleUpload}
           disabled={!file || uploading}
-          className={`w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white 
+          className={`w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white
             ${!file || uploading
               ? 'bg-gray-300 cursor-not-allowed'
               : 'bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500'

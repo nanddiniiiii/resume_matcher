@@ -2,11 +2,10 @@
 Extended user statistics and profile endpoints.
 Provides detailed user activity metrics and profile management.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import Query, APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from pydantic import BaseModel
-from typing import Optional
 
 from app.database import get_db
 from app.auth import get_current_user
@@ -29,29 +28,29 @@ class UserStatsResponse(BaseModel):
 
 
 @router.get("/stats")
-async def get_user_stats(
+def get_user_stats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get comprehensive user statistics."""
     # Count resumes
     total_resumes = db.query(Resume).filter(Resume.user_id == current_user.id).count()
-    
+
     # Count matches across all resumes
     total_matches = db.query(JobMatch).join(Resume).filter(
         Resume.user_id == current_user.id
     ).count()
-    
+
     # Count saved jobs
     total_saved_jobs = db.query(SavedJob).filter(
         SavedJob.user_id == current_user.id
     ).count()
-    
+
     # Count applications
     total_applications = db.query(JobApplication).filter(
         JobApplication.user_id == current_user.id
     ).count()
-    
+
     # Application breakdown by status
     app_breakdown = db.query(
         JobApplication.status,
@@ -59,18 +58,18 @@ async def get_user_stats(
     ).filter(
         JobApplication.user_id == current_user.id
     ).group_by(JobApplication.status).all()
-    
+
     application_breakdown = {status: count for status, count in app_breakdown}
-    
+
     # Recent activity
     recent_resume = db.query(Resume).filter(
         Resume.user_id == current_user.id
     ).order_by(Resume.created_at.desc()).first()
-    
+
     recent_application = db.query(JobApplication).filter(
         JobApplication.user_id == current_user.id
     ).order_by(JobApplication.applied_date.desc()).first()
-    
+
     return {
         "total_resumes": total_resumes,
         "total_matches": total_matches,
@@ -85,9 +84,9 @@ async def get_user_stats(
 
 
 @router.get("/resumes")
-async def get_user_resumes(
-    skip: int = 0,
-    limit: int = 10,
+def get_user_resumes(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -97,14 +96,14 @@ async def get_user_resumes(
     ).order_by(
         Resume.created_at.desc()
     ).offset(skip).limit(limit).all()
-    
+
     total = db.query(Resume).filter(Resume.user_id == current_user.id).count()
-    
+
     result = []
     for resume in resumes:
         # Count matches for this resume
         match_count = db.query(JobMatch).filter(JobMatch.resume_id == resume.id).count()
-        
+
         result.append({
             "id": resume.id,
             "filename": resume.filename,
@@ -112,7 +111,7 @@ async def get_user_resumes(
             "skills": resume.skills,
             "match_count": match_count
         })
-    
+
     return {
         "resumes": result,
         "total": total,
@@ -122,10 +121,10 @@ async def get_user_resumes(
 
 
 @router.get("/matches/{resume_id}")
-async def get_resume_matches(
+def get_resume_matches(
     resume_id: int,
-    skip: int = 0,
-    limit: int = 10,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
     min_score: float = 0.0,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -136,29 +135,29 @@ async def get_resume_matches(
         Resume.id == resume_id,
         Resume.user_id == current_user.id
     ).first()
-    
+
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
-    
+
     # Get matches with score filter
     matches = db.query(JobMatch).filter(
         JobMatch.resume_id == resume_id,
-        JobMatch.match_score >= min_score
+        JobMatch.similarity_score >= min_score
     ).order_by(
-        JobMatch.match_score.desc()
+        JobMatch.similarity_score.desc()
     ).offset(skip).limit(limit).all()
-    
+
     total = db.query(JobMatch).filter(
         JobMatch.resume_id == resume_id,
-        JobMatch.match_score >= min_score
+        JobMatch.similarity_score >= min_score
     ).count()
-    
+
     return {
         "matches": [
             {
                 "id": match.id,
                 "job_id": match.job_id,
-                "match_score": round(match.match_score, 2),
+                "match_score": round(match.similarity_score, 2),
                 "explanation": match.explanation,
                 "created_at": match.created_at.isoformat()
             }

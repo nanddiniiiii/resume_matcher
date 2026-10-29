@@ -1,59 +1,36 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useSyncExternalStore, ReactNode } from 'react'
 
 interface ThemeContextType {
   isDarkMode: boolean
   toggleDarkMode: () => void
 }
-
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
+function subscribe(callback: () => void) {
+  window.addEventListener('storage', callback)
+  window.addEventListener('theme-change', callback)
+  return () => {
+    window.removeEventListener('storage', callback)
+    window.removeEventListener('theme-change', callback)
+  }
+}
+const getSnapshot = () => localStorage.getItem('theme') === 'dark'
+const getServerSnapshot = () => false
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [isDarkMode, setIsDarkMode] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
+  const isDarkMode = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
   useEffect(() => {
-    setMounted(true)
-    const savedTheme = localStorage.getItem('theme')
-    if (savedTheme === 'dark') {
-      setIsDarkMode(true)
-      document.documentElement.classList.add('dark')
-    }
-  }, [])
-
+    document.documentElement.classList.toggle('dark', isDarkMode)
+  }, [isDarkMode])
   const toggleDarkMode = () => {
-    const newMode = !isDarkMode
-    setIsDarkMode(newMode)
-    
-    if (newMode) {
-      document.documentElement.classList.add('dark')
-      localStorage.setItem('theme', 'dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-      localStorage.setItem('theme', 'light')
-    }
+    localStorage.setItem('theme', isDarkMode ? 'light' : 'dark')
+    window.dispatchEvent(new Event('theme-change'))
   }
-
-  if (!mounted) {
-    return <>{children}</>
-  }
-
-  return (
-    <ThemeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
-      {children}
-    </ThemeContext.Provider>
-  )
+  return <ThemeContext.Provider value={{ isDarkMode, toggleDarkMode }}>{children}</ThemeContext.Provider>
 }
-
 export function useTheme() {
   const context = useContext(ThemeContext)
-  if (context === undefined) {
-    // Return default values if provider is not available
-    return {
-      isDarkMode: false,
-      toggleDarkMode: () => {}
-    }
-  }
+  if (!context) throw new Error('useTheme must be used within ThemeProvider')
   return context
 }

@@ -1,3 +1,5 @@
+> Historical notes. See [README.md](README.md) for current setup and behavior, and [docs/AUDIT.md](docs/AUDIT.md) for verified fixes and limitations.
+
 # ⚡ Quick Reference Card
 
 One-page reference for common commands and workflows.
@@ -361,7 +363,7 @@ python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
 
-# Frontend  
+# Frontend
 cd frontend
 rm -rf node_modules .next
 npm install

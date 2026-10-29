@@ -1,3 +1,5 @@
+> Historical notes. See [README.md](README.md) for current setup and behavior, and [docs/AUDIT.md](docs/AUDIT.md) for verified fixes and limitations.
+
 # 🎉 Complete Feature List - AI Job Recommendation Platform
 
 ## Overview
@@ -400,18 +402,18 @@ proj_interview/
 
 ## 🎯 Key Achievements
 
-✅ **Full Authentication System:** Register, login, logout, profile management  
-✅ **AI-Powered Matching:** Semantic similarity with explanations  
-✅ **Job Bookmarking:** Save/unsave jobs for later  
-✅ **Application Tracking:** Track status through hiring pipeline  
-✅ **Advanced Search:** Multi-filter job discovery  
-✅ **User Statistics:** Comprehensive dashboard metrics  
-✅ **Dark Mode:** System-wide with persistence  
-✅ **Responsive Design:** Mobile, tablet, desktop optimized  
-✅ **Performance Optimized:** Database indexes, pagination  
-✅ **Security Hardened:** JWT auth, password hashing, CORS  
-✅ **Fully Documented:** Backend + Frontend documentation  
-✅ **Version Controlled:** Git with GitHub integration  
+✅ **Full Authentication System:** Register, login, logout, profile management
+✅ **AI-Powered Matching:** Semantic similarity with explanations
+✅ **Job Bookmarking:** Save/unsave jobs for later
+✅ **Application Tracking:** Track status through hiring pipeline
+✅ **Advanced Search:** Multi-filter job discovery
+✅ **User Statistics:** Comprehensive dashboard metrics
+✅ **Dark Mode:** System-wide with persistence
+✅ **Responsive Design:** Mobile, tablet, desktop optimized
+✅ **Performance Optimized:** Database indexes, pagination
+✅ **Security Hardened:** JWT auth, password hashing, CORS
+✅ **Fully Documented:** Backend + Frontend documentation
+✅ **Version Controlled:** Git with GitHub integration
 
 ---
 

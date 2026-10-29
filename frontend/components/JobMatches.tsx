@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { matchAPI } from '@/lib/api'
 import { JobMatch, JobMatchListResponse } from '@/lib/types'
 import JobCard from './JobCard'
@@ -15,16 +15,13 @@ export default function JobMatches({ resumeId }: JobMatchesProps) {
   const [error, setError] = useState<string | null>(null)
   const [totalMatches, setTotalMatches] = useState(0)
 
-  useEffect(() => {
-    loadMatches()
-  }, [resumeId])
 
-  const loadMatches = async () => {
-    setLoading(true)
-    setError(null)
+
+  const loadMatches = useCallback(async () => {
 
     try {
       const data: JobMatchListResponse = await matchAPI.getMatches(resumeId, 10)
+      setError(null)
       setMatches(data.matches)
       setTotalMatches(data.total_matches)
     } catch (err: any) {
@@ -32,7 +29,15 @@ export default function JobMatches({ resumeId }: JobMatchesProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [resumeId])
+
+  useEffect(() => {
+    const launch = window.setTimeout(() => {
+    void loadMatches()
+
+    }, 0)
+    return () => window.clearTimeout(launch)
+  }, [loadMatches])
 
   if (loading) {
     return (
@@ -79,7 +84,7 @@ export default function JobMatches({ resumeId }: JobMatchesProps) {
         </svg>
         <h3 className="text-lg font-medium text-yellow-900 mb-2">No Matches Found</h3>
         <p className="text-yellow-700">
-          We couldn't find any jobs matching your resume. Try uploading a different resume or check back later for new opportunities.
+          We couldn&apos;t find any jobs matching your resume. Try uploading a different resume or check back later for new opportunities.
         </p>
       </div>
     )
@@ -137,7 +142,7 @@ export default function JobMatches({ resumeId }: JobMatchesProps) {
       {/* Job Cards */}
       <div className="space-y-6">
         {matches.map((match, index) => (
-          <JobCard key={match.job.id} match={match} rank={index + 1} />
+          <JobCard resumeId={resumeId} key={match.job.id} match={match} rank={index + 1} />
         ))}
       </div>
     </div>

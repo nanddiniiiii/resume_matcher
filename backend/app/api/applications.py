@@ -2,9 +2,9 @@
 API endpoints for job application tracking.
 Track the status of job applications (applied, interviewing, rejected, accepted).
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import Query, APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import Optional
 from pydantic import BaseModel
 
 from app.database import get_db
@@ -29,7 +29,7 @@ class ApplicationUpdate(BaseModel):
 
 
 @router.post("/")
-async def create_application(
+def create_application(
     application: ApplicationCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -39,7 +39,7 @@ async def create_application(
     job = db.query(Job).filter(Job.id == application.job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    
+
     # Verify resume if provided
     if application.resume_id:
         resume = db.query(Resume).filter(
@@ -48,20 +48,20 @@ async def create_application(
         ).first()
         if not resume:
             raise HTTPException(status_code=404, detail="Resume not found")
-    
+
     # Check if already applied
     existing = db.query(JobApplication).filter(
         JobApplication.user_id == current_user.id,
         JobApplication.job_id == application.job_id
     ).first()
-    
+
     if existing:
         return {
             "message": "Application already tracked",
             "application_id": existing.id,
             "status": existing.status
         }
-    
+
     # Create application
     new_app = JobApplication(
         user_id=current_user.id,
@@ -73,7 +73,7 @@ async def create_application(
     db.add(new_app)
     db.commit()
     db.refresh(new_app)
-    
+
     return {
         "message": "Application tracked successfully",
         "application_id": new_app.id,
@@ -82,7 +82,7 @@ async def create_application(
 
 
 @router.put("/{application_id}")
-async def update_application(
+def update_application(
     application_id: int,
     update: ApplicationUpdate,
     db: Session = Depends(get_db),
@@ -93,10 +93,10 @@ async def update_application(
         JobApplication.id == application_id,
         JobApplication.user_id == current_user.id
     ).first()
-    
+
     if not application:
         raise HTTPException(status_code=404, detail="Application not found")
-    
+
     # Validate status
     valid_statuses = ["applied", "interviewing", "rejected", "accepted"]
     if update.status not in valid_statuses:
@@ -104,14 +104,14 @@ async def update_application(
             status_code=400,
             detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
         )
-    
+
     application.status = update.status
     if update.notes is not None:
         application.notes = update.notes
-    
+
     db.commit()
     db.refresh(application)
-    
+
     return {
         "message": "Application updated successfully",
         "application_id": application.id,
@@ -120,10 +120,10 @@ async def update_application(
 
 
 @router.get("/")
-async def get_applications(
+def get_applications(
     status: Optional[str] = None,
-    skip: int = 0,
-    limit: int = 20,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -133,19 +133,19 @@ async def get_applications(
     ).filter(
         JobApplication.user_id == current_user.id
     )
-    
+
     if status:
         query = query.filter(JobApplication.status == status)
-    
+
     applications = query.order_by(
         JobApplication.applied_date.desc()
     ).offset(skip).limit(limit).all()
-    
+
     total_query = db.query(JobApplication).filter(JobApplication.user_id == current_user.id)
     if status:
         total_query = total_query.filter(JobApplication.status == status)
     total = total_query.count()
-    
+
     result = []
     for app, job in applications:
         result.append({
@@ -161,7 +161,7 @@ async def get_applications(
                 "job_type": job.job_type
             }
         })
-    
+
     return {
         "applications": result,
         "total": total,
@@ -171,7 +171,7 @@ async def get_applications(
 
 
 @router.delete("/{application_id}")
-async def delete_application(
+def delete_application(
     application_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -181,11 +181,11 @@ async def delete_application(
         JobApplication.id == application_id,
         JobApplication.user_id == current_user.id
     ).first()
-    
+
     if not application:
         raise HTTPException(status_code=404, detail="Application not found")
-    
+
     db.delete(application)
     db.commit()
-    
+
     return {"message": "Application deleted successfully"}

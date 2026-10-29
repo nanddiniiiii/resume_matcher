@@ -1,6 +1,8 @@
 import axios from 'axios'
+import Cookies from 'js-cookie'
+import { API_BASE_URL } from './config'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -9,12 +11,17 @@ const api = axios.create({
   },
 })
 
+api.interceptors.request.use((config) => {
+  const token = Cookies.get('access_token')
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
+
 // Resume API
 export const resumeAPI = {
-  upload: async (file: File, userEmail: string = 'demo@example.com') => {
+  upload: async (file: File) => {
     const formData = new FormData()
     formData.append('file', file)
-    formData.append('user_email', userEmail)
 
     const response = await api.post('/api/resumes/upload', formData, {
       headers: {
@@ -29,10 +36,8 @@ export const resumeAPI = {
     return response.data
   },
 
-  listResumes: async (userEmail: string = 'demo@example.com') => {
-    const response = await api.get(`/api/resumes/`, {
-      params: { user_email: userEmail },
-    })
+  listResumes: async () => {
+    const response = await api.get('/api/resumes/')
     return response.data
   },
 

@@ -9,24 +9,20 @@ def run_migration():
     """Run the migration."""
     print("Running database migration...")
     print("Adding authentication fields to users table...")
-    
+
     migrations = [
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR DEFAULT ''",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE",
-        "UPDATE users SET password_hash = '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMesJU3QBnITJjKbWJqxHWKcfa' WHERE password_hash = ''"
+        "UPDATE users SET is_active = FALSE WHERE password_hash IS NULL OR password_hash = '' OR password_hash = '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMesJU3QBnITJjKbWJqxHWKcfa'"
     ]
-    
-    with engine.connect() as connection:
+
+    with engine.begin() as connection:
         for sql in migrations:
-            try:
-                connection.execute(text(sql))
-                connection.commit()
-                print(f"✓ Executed: {sql[:60]}...")
-            except Exception as e:
-                print(f"✗ Error: {e}")
-    
+            connection.execute(text(sql))
+    print("Authentication migration applied")
+
     print("\n✓ Migration complete!")
-    print("Note: Existing users have default password 'password123'")
+    print("Note: Legacy accounts without password hashes are disabled; reset them through a trusted administrative process.")
 
 if __name__ == "__main__":
     run_migration()

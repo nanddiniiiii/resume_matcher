@@ -43,7 +43,7 @@ def analyze_resume_for_job(
 ):
     """
     Analyze resume against a specific job and get improvement suggestions
-    
+
     Returns:
     - ATS score (0-100)
     - Missing keywords
@@ -57,29 +57,29 @@ def analyze_resume_for_job(
             Resume.id == request.resume_id,
             Resume.user_id == current_user.id
         ).first()
-        
+
         if not resume:
             raise HTTPException(status_code=404, detail="Resume not found")
-        
+
         # Get job
         job = db.query(Job).filter(Job.id == request.job_id).first()
-        
+
         if not job:
             raise HTTPException(status_code=404, detail="Job not found")
-        
+
         # Get matching skills from resume (simple extraction for demo)
-        resume_skills = _extract_skills_from_resume(resume.processed_text)
-        
+        resume_skills = resume.skills or []
+
         # Analyze resume against job
         analysis = resume_analyzer_service.analyze_resume_for_job(
-            resume_text=resume.processed_text,
+            resume_text=resume.raw_text,
             job_description=job.description,
             job_skills=job.required_skills,
             resume_skills=resume_skills
         )
-        
+
         return analysis
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -100,15 +100,15 @@ def get_quick_tips(
     try:
         # Get job
         job = db.query(Job).filter(Job.id == job_id).first()
-        
+
         if not job:
             raise HTTPException(status_code=404, detail="Job not found")
-        
+
         # Get user's most recent resume
         resume = db.query(Resume).filter(
             Resume.user_id == current_user.id
         ).order_by(Resume.created_at.desc()).first()
-        
+
         if not resume:
             return {
                 "tips": [
@@ -117,25 +117,25 @@ def get_quick_tips(
                     "Make sure to highlight relevant experience"
                 ]
             }
-        
+
         # Quick skill comparison
-        resume_skills = _extract_skills_from_resume(resume.processed_text)
-        missing_skills = [skill for skill in job.required_skills if skill.lower() not in resume.processed_text.lower()]
-        
+        resume_skills = resume.skills or []
+        missing_skills = [skill for skill in job.required_skills if skill.lower() not in resume.raw_text.lower()]
+
         tips = []
-        
+
         if missing_skills:
             tips.append(f"Consider adding these skills if you have them: {', '.join(missing_skills[:3])}")
-        
-        tips.append(f"Match rate: {len(resume_skills)}/{len(job.required_skills)} required skills")
+
+        tips.append(f"Match rate: {len(set(s.lower() for s in resume_skills) & set(s.lower() for s in job.required_skills))}/{len(job.required_skills)} required skills")
         tips.append("Tailor your resume to highlight relevant experience for this position")
-        
+
         return {
             "job_title": job.title,
             "tips": tips[:5],
             "missing_skills": missing_skills[:10]
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -158,12 +158,12 @@ def _extract_skills_from_resume(resume_text: str) -> List[str]:
         'PyTorch', 'Pandas', 'NumPy', 'Scikit-learn', 'FastAPI', 'Next.js',
         'TypeScript', 'HTML', 'CSS', 'Tailwind', 'Bootstrap', 'Material-UI'
     ]
-    
+
     resume_lower = resume_text.lower()
     found_skills = []
-    
+
     for skill in common_skills:
         if skill.lower() in resume_lower:
             found_skills.append(skill)
-    
+
     return found_skills

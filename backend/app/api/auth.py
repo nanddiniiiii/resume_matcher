@@ -15,7 +15,14 @@ from app.auth import (
     get_current_active_user,
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
+from pydantic import BaseModel, Field
+
 from app.api.schemas import UserCreate, UserResponse, Token, UserLogin
+
+
+class ProfileUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -30,7 +37,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
-    
+
     # Create new user
     hashed_password = get_password_hash(user_data.password)
     new_user = User(
@@ -39,11 +46,11 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         password_hash=hashed_password,
         is_active=True
     )
-    
+
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    
+
     return new_user
 
 
@@ -52,34 +59,35 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     """Login and get access token."""
     # Find user
     user = db.query(User).filter(User.email == form_data.username).first()
-    
+
     if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user account"
         )
-    
+
     # Create access token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email},
         expires_delta=access_token_expires
     )
-    
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
         "user": {
             "id": user.id,
             "email": user.email,
-            "name": user.name
+            "name": user.name,
+            "created_at": user.created_at.isoformat()
         }
     }
 
@@ -88,32 +96,33 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 def login_json(user_data: UserLogin, db: Session = Depends(get_db)):
     """Login with JSON body (for frontend)."""
     user = db.query(User).filter(User.email == user_data.email).first()
-    
+
     if not user or not verify_password(user_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
         )
-    
+
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user account"
         )
-    
+
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email},
         expires_delta=access_token_expires
     )
-    
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
         "user": {
             "id": user.id,
             "email": user.email,
-            "name": user.name
+            "name": user.name,
+            "created_at": user.created_at.isoformat()
         }
     }
 
@@ -126,14 +135,13 @@ def get_me(current_user: User = Depends(get_current_active_user)):
 
 @router.put("/me", response_model=UserResponse)
 def update_me(
-    name: str = None,
+    profile: ProfileUpdate,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """Update current user information."""
-    if name:
-        current_user.name = name
-    
+    current_user.name = profile.name.strip()
+
     db.commit()
     db.refresh(current_user)
     return current_user

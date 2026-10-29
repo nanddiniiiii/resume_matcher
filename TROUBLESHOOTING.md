@@ -1,3 +1,5 @@
+> Historical notes. See [README.md](README.md) for current setup and behavior, and [docs/AUDIT.md](docs/AUDIT.md) for verified fixes and limitations.
+
 # 🔧 Troubleshooting Guide
 
 Common issues and their solutions when setting up the AI Job Matcher.
@@ -397,7 +399,7 @@ self.skill_keywords = {
 
 **Cause**: First-time model download and initialization.
 
-**This is normal!** 
+**This is normal!**
 - Sentence transformer downloads model (~100MB)
 - Model initialization takes time
 - Subsequent uploads will be much faster
@@ -416,7 +418,7 @@ from sqlalchemy import Index
 
 class Job(Base):
     # ... existing code ...
-    
+
     __table_args__ = (
         Index('idx_job_type', 'job_type'),
     )

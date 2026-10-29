@@ -1,14 +1,20 @@
-from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, HTTPException
+from sqlalchemy import text
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import engine, Base
 from app.api import resumes, jobs, matches, auth, saved_jobs, applications, users, scraper, resume_analyzer
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+@asynccontextmanager
+async def lifespan(app):
+    Base.metadata.create_all(bind=engine)
+    yield
+    engine.dispose()
 
 # Initialize FastAPI app
 app = FastAPI(
+    lifespan=lifespan,
     title="AI Job Matcher API",
     description="AI-powered job recommendation platform using semantic matching with real-time job scraping",
     version="2.1.0"
@@ -26,9 +32,10 @@ app.add_middleware(
 # Include routers
 app.include_router(auth.router, prefix="/api")
 app.include_router(resumes.router, prefix="/api")
-app.include_router(jobs.router, prefix="/api")
+
 app.include_router(matches.router, prefix="/api")
-app.include_router(saved_jobs.router)  # Already has /api/jobs prefix
+app.include_router(saved_jobs.router)
+app.include_router(jobs.router, prefix="/api")
 app.include_router(applications.router)  # Already has /api/applications prefix
 app.include_router(users.router)  # Already has /api/users prefix
 app.include_router(scraper.router, prefix="/api")  # Job scraper endpoints
@@ -49,7 +56,12 @@ def root():
 @app.get("/health")
 def health_check():
     """Health check endpoint."""
-    return {"status": "healthy"}
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+    except Exception as exc:
+        raise HTTPException(503, "Database unavailable") from exc
+    return {"status": "healthy", "database": "connected"}
 
 
 if __name__ == "__main__":

@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { API_BASE_URL } from "@/lib/config";
+
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import Header from "@/components/Header";
@@ -30,18 +32,13 @@ export default function SavedJobsPage() {
   const [page, setPage] = useState(1);
   const limit = 10;
 
-  useEffect(() => {
-    if (token) {
-      fetchSavedJobs();
-    }
-  }, [token, page]);
 
-  const fetchSavedJobs = async () => {
+
+  const fetchSavedJobs = useCallback(async () => {
     try {
-      setLoading(true);
       const skip = (page - 1) * limit;
       const response = await fetch(
-        `http://localhost:8000/api/jobs/saved?skip=${skip}&limit=${limit}`,
+        `${API_BASE_URL}/api/jobs/saved?skip=${skip}&limit=${limit}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -59,12 +56,22 @@ export default function SavedJobsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, page])
+
+  useEffect(() => {
+    const launch = window.setTimeout(() => {
+    if (token) {
+      void fetchSavedJobs();
+    } else { Promise.resolve().then(() => setLoading(false)); }
+
+    }, 0)
+    return () => window.clearTimeout(launch)
+  }, [fetchSavedJobs, token])
 
   const handleUnsave = async (jobId: number) => {
     try {
       const response = await fetch(
-        `http://localhost:8000/api/jobs/${jobId}/save`,
+        `${API_BASE_URL}/api/jobs/${jobId}/save`,
         {
           method: "DELETE",
           headers: {
@@ -85,7 +92,7 @@ export default function SavedJobsPage() {
   const handleApply = async (jobId: number) => {
     try {
       const response = await fetch(
-        "http://localhost:8000/api/applications/",
+        `${API_BASE_URL}/api/applications/`,
         {
           method: "POST",
           headers: {
@@ -150,7 +157,7 @@ export default function SavedJobsPage() {
                   No saved jobs yet
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Start saving jobs you're interested in to view them here
+                  Start saving jobs you&apos;re interested in to view them here
                 </p>
               </div>
             ) : (

@@ -1,16 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { API_BASE_URL } from '@/lib/config'
+
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import toast from 'react-hot-toast'
 
 interface ScraperStatus {
+  run: { running: boolean; last_error: string | null; last_result: { total_added: number; total_updated: number; errors: string[] } | null }
   total_jobs: number
   active_jobs: number
   expired_jobs: number
   jobs_by_source: { [key: string]: number }
   jobs_by_type: { [key: string]: number }
-  last_scrape: string | null
+  last_scraped_at: string | null
   sources_available: string[]
 }
 
@@ -21,9 +24,9 @@ export default function ScraperAdminPage() {
   const [markingExpired, setMarkingExpired] = useState(false)
   const { token } = useAuth()
 
-  const fetchStatus = async () => {
+  const fetchStatus = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/scraper/status', {
+      const response = await fetch(`${API_BASE_URL}/api/scraper/status`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -41,16 +44,27 @@ export default function ScraperAdminPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [token])
 
   useEffect(() => {
-    fetchStatus()
-  }, [])
+    const launch = window.setTimeout(() => {
+    if (token) void fetchStatus()
+    else Promise.resolve().then(() => setLoading(false))
+
+    }, 0)
+    return () => window.clearTimeout(launch)
+  }, [token, fetchStatus])
+
+  useEffect(() => {
+    if (!status?.run.running) return
+    const timer = window.setInterval(() => { void fetchStatus() }, 2000)
+    return () => window.clearInterval(timer)
+  }, [status?.run.running, fetchStatus])
 
   const handleRunScraper = async () => {
     setScraping(true)
     try {
-      const response = await fetch('http://localhost:8000/api/scraper/run', {
+      const response = await fetch(`${API_BASE_URL}/api/scraper/run`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -61,8 +75,7 @@ export default function ScraperAdminPage() {
       if (response.ok) {
         const data = await response.json()
         toast.success(data.message)
-        // Refresh status after a delay to allow scraping to complete
-        setTimeout(() => fetchStatus(), 3000)
+        await fetchStatus()
       } else {
         const error = await response.json()
         toast.error(error.detail || 'Failed to run scraper')
@@ -78,7 +91,7 @@ export default function ScraperAdminPage() {
   const handleMarkExpired = async () => {
     setMarkingExpired(true)
     try {
-      const response = await fetch('http://localhost:8000/api/scraper/mark-expired', {
+      const response = await fetch(`${API_BASE_URL}/api/scraper/mark-expired`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -88,7 +101,7 @@ export default function ScraperAdminPage() {
 
       if (response.ok) {
         const data = await response.json()
-        toast.success(`Marked ${data.marked_expired} jobs as expired`)
+        toast.success(`Marked ${data.expired_count} jobs as expired`)
         fetchStatus()
       } else {
         const error = await response.json()
@@ -126,13 +139,16 @@ export default function ScraperAdminPage() {
           </p>
         </div>
 
+        {status?.run.running && <p role="status" className="mb-4">Scraping is running. Counts refresh automatically.</p>}
+        {status?.run.last_error && <p role="alert" className="mb-4 text-red-700">{status.run.last_error}</p>}
+        {status?.run.last_result && <p className="mb-4">Last run: {status.run.last_result.total_added} added, {status.run.last_result.total_updated} updated. {status.run.last_result.errors.join('; ')}</p>}
         {/* Action Buttons */}
         <div className="mb-8 flex gap-4">
           <button
             onClick={handleRunScraper}
-            disabled={scraping}
-            className={`px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold 
-              ${scraping ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'} 
+            disabled={scraping || status?.run.running}
+            className={`px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold
+              ${scraping ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}
               transition-colors`}
           >
             {scraping ? (
@@ -151,8 +167,8 @@ export default function ScraperAdminPage() {
           <button
             onClick={handleMarkExpired}
             disabled={markingExpired}
-            className={`px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold 
-              ${markingExpired ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-700'} 
+            className={`px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold
+              ${markingExpired ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-700'}
               transition-colors`}
           >
             {markingExpired ? 'Marking...' : '🗑️ Mark Expired Jobs'}
@@ -188,10 +204,10 @@ export default function ScraperAdminPage() {
             </div>
 
             {/* Last Scrape Time */}
-            {status.last_scrape && (
+            {status.last_scraped_at && (
               <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
                 <p className="text-sm text-blue-700">
-                  <span className="font-semibold">Last Scrape:</span> {new Date(status.last_scrape).toLocaleString()}
+                  <span className="font-semibold">Last Scrape:</span> {new Date(status.last_scraped_at).toLocaleString()}
                 </p>
               </div>
             )}

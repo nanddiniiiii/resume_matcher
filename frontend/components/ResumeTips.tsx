@@ -1,41 +1,31 @@
 'use client'
 
+import { API_BASE_URL } from '@/lib/config'
+
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import toast from 'react-hot-toast'
 
 interface ResumeTipsProps {
+  resumeId: number
   jobId: number
   jobTitle: string
 }
 
-interface QuickTip {
-  tip: string
-  priority: 'high' | 'medium' | 'low'
-}
-
 interface FullAnalysis {
   ats_score: number
-  interpretation: string
+  score_interpretation: string
   missing_keywords: string[]
-  weak_areas: string[]
-  suggestions: Array<{
-    category: string
-    suggestion: string
-    priority: 'high' | 'medium' | 'low'
-  }>
-  keyword_analysis: {
-    total_keywords: number
-    matched_keywords: number
-    frequency_map: { [key: string]: number }
-  }
+  weak_areas: Array<{ area: string; issue: string; severity: string }>
+  suggestions: Array<{ category: string; description: string; action: string; priority: string }>
+  keyword_analysis: Record<string, { count: number; status: string }>
   skill_match_rate: number
   recommended_additions: string[]
 }
 
-export default function ResumeTips({ jobId, jobTitle }: ResumeTipsProps) {
+export default function ResumeTips({ jobId, jobTitle, resumeId }: ResumeTipsProps) {
   const [showModal, setShowModal] = useState(false)
-  const [quickTips, setQuickTips] = useState<QuickTip[]>([])
+  const [quickTips, setQuickTips] = useState<string[]>([])
   const [fullAnalysis, setFullAnalysis] = useState<FullAnalysis | null>(null)
   const [loadingTips, setLoadingTips] = useState(false)
   const [loadingAnalysis, setLoadingAnalysis] = useState(false)
@@ -45,7 +35,7 @@ export default function ResumeTips({ jobId, jobTitle }: ResumeTipsProps) {
     setLoadingTips(true)
     try {
       const response = await fetch(
-        `http://localhost:8000/api/resume-analyzer/quick-tips/${jobId}`,
+        `${API_BASE_URL}/api/resume-analyzer/quick-tips/${jobId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -70,13 +60,13 @@ export default function ResumeTips({ jobId, jobTitle }: ResumeTipsProps) {
   const fetchFullAnalysis = async () => {
     setLoadingAnalysis(true)
     try {
-      const response = await fetch('http://localhost:8000/api/resume-analyzer/analyze', {
+      const response = await fetch(`${API_BASE_URL}/api/resume-analyzer/analyze`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ job_id: jobId }),
+        body: JSON.stringify({ job_id: jobId, resume_id: resumeId }),
       })
 
       if (response.ok) {
@@ -147,10 +137,7 @@ export default function ResumeTips({ jobId, jobTitle }: ResumeTipsProps) {
           <ul className="space-y-2">
             {quickTips.map((tip, index) => (
               <li key={index} className="flex items-start">
-                <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium mr-2 ${getPriorityColor(tip.priority)}`}>
-                  {tip.priority}
-                </span>
-                <span className="text-sm text-gray-700">{tip.tip}</span>
+                <span className="text-sm text-gray-700">{tip}</span>
               </li>
             ))}
           </ul>
@@ -176,7 +163,7 @@ export default function ResumeTips({ jobId, jobTitle }: ResumeTipsProps) {
               {/* ATS Score */}
               <div className={`p-6 rounded-lg ${getScoreBgColor(fullAnalysis.ats_score)}`}>
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-bold text-gray-900">ATS Score</h3>
+                  <h3 className="text-lg font-bold text-gray-900">Resume relevance score</h3>
                   <span className={`text-5xl font-bold ${getScoreColor(fullAnalysis.ats_score)}`}>
                     {fullAnalysis.ats_score}
                   </span>
@@ -187,7 +174,8 @@ export default function ResumeTips({ jobId, jobTitle }: ResumeTipsProps) {
                     style={{ width: `${fullAnalysis.ats_score}%` }}
                   ></div>
                 </div>
-                <p className="mt-2 text-sm text-gray-700">{fullAnalysis.interpretation}</p>
+                <p className="mt-2 text-sm text-gray-700">{fullAnalysis.score_interpretation}</p>
+                <p className="mt-1 text-xs text-gray-600">Heuristic feedback, not a hiring probability or an employer ATS result.</p>
               </div>
 
               {/* Skill Match Rate */}
@@ -221,7 +209,7 @@ export default function ResumeTips({ jobId, jobTitle }: ResumeTipsProps) {
                     {fullAnalysis.weak_areas.map((area, index) => (
                       <li key={index} className="flex items-start">
                         <span className="text-red-500 mr-2">⚠️</span>
-                        <span className="text-gray-700">{area}</span>
+                        <span className="text-gray-700">{area.issue}</span>
                       </li>
                     ))}
                   </ul>
@@ -240,7 +228,7 @@ export default function ResumeTips({ jobId, jobTitle }: ResumeTipsProps) {
                         </span>
                         <span className="font-semibold text-gray-900">{suggestion.category}</span>
                       </div>
-                      <p className="text-sm text-gray-700">{suggestion.suggestion}</p>
+                      <p className="text-sm text-gray-700">{suggestion.description} {suggestion.action}</p>
                     </div>
                   ))}
                 </div>
@@ -267,20 +255,20 @@ export default function ResumeTips({ jobId, jobTitle }: ResumeTipsProps) {
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
                     <p className="text-sm text-gray-600">Total Keywords</p>
-                    <p className="text-2xl font-bold text-gray-900">{fullAnalysis.keyword_analysis.total_keywords}</p>
+                    <p className="text-2xl font-bold text-gray-900">{Object.keys(fullAnalysis.keyword_analysis).length}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Matched Keywords</p>
-                    <p className="text-2xl font-bold text-green-600">{fullAnalysis.keyword_analysis.matched_keywords}</p>
+                    <p className="text-2xl font-bold text-green-600">{Object.values(fullAnalysis.keyword_analysis).filter(item => item.count > 0).length}</p>
                   </div>
                 </div>
-                {Object.keys(fullAnalysis.keyword_analysis.frequency_map).length > 0 && (
+                {Object.keys(fullAnalysis.keyword_analysis).length > 0 && (
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-2">Keyword Frequency:</p>
                     <div className="flex flex-wrap gap-2">
-                      {Object.entries(fullAnalysis.keyword_analysis.frequency_map).slice(0, 15).map(([keyword, count]) => (
+                      {Object.entries(fullAnalysis.keyword_analysis).slice(0, 15).map(([keyword, count]) => (
                         <span key={keyword} className="px-2 py-1 bg-white border border-gray-300 rounded text-xs">
-                          {keyword} <span className="font-bold text-blue-600">×{count}</span>
+                          {keyword} <span className="font-bold text-blue-600">×{count.count}</span>
                         </span>
                       ))}
                     </div>

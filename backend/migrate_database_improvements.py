@@ -11,7 +11,7 @@ def add_indexes():
     """Add performance indexes to existing tables."""
     from sqlalchemy import text
     
-    with engine.connect() as conn:
+    with engine.begin() as conn:
         # Add indexes for better query performance
         try:
             # User indexes
@@ -34,7 +34,8 @@ def add_indexes():
             conn.commit()
             print("✅ Indexes created successfully")
         except Exception as e:
-            print(f"⚠️  Some indexes may already exist: {e}")
+            print(f"Index migration failed: {e}")
+            raise
 
 
 def run_migration():

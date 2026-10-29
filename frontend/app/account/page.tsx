@@ -1,8 +1,10 @@
 'use client'
 
+import { API_BASE_URL } from '@/lib/config'
+
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Header from '@/components/Header'
 import { toast } from 'react-hot-toast'
 
@@ -24,26 +26,18 @@ interface UserStats {
 }
 
 export default function AccountPage() {
-  const { user, token, loading, isAuthenticated } = useAuth()
+  const { user, token, loading, isAuthenticated, updateUser } = useAuth()
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   const [name, setName] = useState('')
   const [stats, setStats] = useState<UserStats | null>(null)
   const [loadingStats, setLoadingStats] = useState(true)
 
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push('/login')
-    }
-    if (user) {
-      setName(user.name || '')
-      fetchStats()
-    }
-  }, [loading, isAuthenticated, router, user])
 
-  const fetchStats = async () => {
+
+  const fetchStats = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/users/stats', {
+      const response = await fetch(`${API_BASE_URL}/api/users/stats`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -57,11 +51,24 @@ export default function AccountPage() {
     } finally {
       setLoadingStats(false)
     }
-  }
+  }, [token])
+
+  useEffect(() => {
+    const launch = window.setTimeout(() => {
+    if (!loading && !isAuthenticated) {
+      router.push('/login')
+    }
+    if (user) {
+      void fetchStats()
+    }
+
+    }, 0)
+    return () => window.clearTimeout(launch)
+  }, [loading, isAuthenticated, router, user, fetchStats])
 
   const handleUpdateName = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/auth/me', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -70,6 +77,7 @@ export default function AccountPage() {
         body: JSON.stringify({ name }),
       })
       if (response.ok) {
+        updateUser(await response.json())
         toast.success('Name updated successfully!')
         setIsEditing(false)
       } else {
@@ -93,7 +101,7 @@ export default function AccountPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors">
       <Header />
-      
+
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden transition-colors">
           {/* Header */}
@@ -115,7 +123,7 @@ export default function AccountPage() {
               {/* Account Information */}
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Account Information</h2>
-                
+
                 <div className="space-y-4">
                   {/* Email */}
                   <div>
@@ -164,7 +172,7 @@ export default function AccountPage() {
                       <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
                         <p className="text-gray-900 dark:text-white">{user.name || 'Not set'}</p>
                         <button
-                          onClick={() => setIsEditing(true)}
+                          onClick={() => { setName(user.name || ''); setIsEditing(true) }}
                           className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 text-sm font-medium"
                         >
                           Edit
@@ -180,7 +188,7 @@ export default function AccountPage() {
                     </label>
                     <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
                       <p className="text-gray-900 dark:text-white">
-                        {new Date(user.created_at || Date.now()).toLocaleDateString('en-US', {
+                        {new Date(user.created_at || '').toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'long',
                           day: 'numeric'
