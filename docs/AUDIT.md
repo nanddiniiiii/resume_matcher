@@ -44,6 +44,8 @@ It should be presented as a working application prototype. There is no labeled r
 - One Playwright workflow passed in Microsoft Edge using real API calls, PDF parsing and Transformer embeddings: registration, upload, ranking, full analysis, bookmarking, application tracking, session restoration and theme persistence. This covers one desktop path, not every browser or screen size.
 - All three PostgreSQL migration scripts completed twice on the disposable database, checking rerun behavior.
 
+The first hosted backend check passed. The first hosted frontend check exposed missing optional platform dependencies in the Windows-generated npm lockfile. The lockfile was regenerated in an empty directory with the runner's npm version to restore clean Linux installation.
+
 These are application-correctness and integration checks, not ranking-quality evidence. GitHub Actions configuration was added; local results do not imply a completed hosted CI run.
 
 Real model inference was also executed with `all-MiniLM-L6-v2`: vectors had 384 dimensions. A software-role pair had cosine similarity 0.453418, versus 0.128016 for software development versus cooking. This is a smoke check on three short inputs, not a benchmark.
